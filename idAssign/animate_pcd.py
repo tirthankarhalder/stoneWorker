@@ -9,6 +9,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import mode
 from collections import defaultdict, Counter
+from denoiser import *
 
 fig = plt.figure(figsize=(10, 6))
 ax1 = fig.add_subplot(111)
@@ -208,6 +209,9 @@ if __name__ == "__main__":
     frames = 10
     frame_data = []
     all_tracks_history = []
+
+    denoiser = DeNoising(qsize=8, order=6, fs=30.0, cutoff=0.7, offset=10)
+
     for index, row in mergedRadarData.iterrows():
         if index >= len(mergedRadarData) - frames:
             break
@@ -220,12 +224,26 @@ if __name__ == "__main__":
         
         points = np.concatenate((np.array(x_pcd).reshape(-1,1),np.array(y_pcd).reshape(-1,1), np.array(dop_pcd).reshape(-1,1)), axis=1)  
         points = points[points[:,2]!=0]
+
+        newPoints = []
+        for i in range(len(points)):
+            stat =  denoiser.process(points[:,0][i], points[:,1][i],points[:,2][i]) 
+            # print(f"stat {i} : {stat}")
+            if stat.isSkipped() or stat.isSync():
+                pass
+            elif stat.isAvailable():
+                newPoints.append(np.array([float(stat.x),float(stat.y),float(points[:,2][i])]))
+
+        print(f"points: {points}")
         if len(points) == 0:
             continue
-        
+        # points = np.array([[x[0], y[0]] for x, y, _ in points])
+
         clustering = DBSCAN(eps=0.3, min_samples=5).fit(points[:,:2])
         cluster_labels = np.array(clustering.labels_)
         current_centroids = calculate_centroids(points[:,:2], cluster_labels)
+        
+
         valid_centroids, tracks, next_id = update_tracks(current_centroids, tracks, next_id)
 
         # valid_centroids, next_id = find_closest_centroid_hungarian(previous_centroids, current_centroids, id_mapping, next_id, frame_counts, frame_threshold=20)
@@ -240,7 +258,7 @@ if __name__ == "__main__":
     ani = FuncAnimation(fig, update, frames=frame_data, blit=False, interval=200)
 
     # Save as MP4 
-    ani.save('radar_animation_1.mp4', writer='ffmpeg', fps=5)
+    ani.save('radar_animation_1_denoiser.mp4', writer='ffmpeg', fps=5)
     plt.show()
     plt.close()
         # plt.title('Radar_1 PCD')
