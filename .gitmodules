@@ -1,0 +1,3 @@
+[submodule "humanDetectID/darknet"]
+	path = humanDetectID/darknet
+	url = https://github.com/hank-ai/darknet.git

@@ -7,7 +7,20 @@
 .cache/
 __pycache__/
 
+
+
+
+
+
 nano3_30_11_2024/
 PhotosVideos/
 rajasthan_stone_worker_data/
-
+processedData/
+SamplesVideoAnnotation
+idAssign/*.mp4
+idAssign/*.pkl
+idAssign/*.txt
+idAssign/**/*.png
+humanDetectID/**/*.png
+humanDetectID/*.weights
+*.csv
